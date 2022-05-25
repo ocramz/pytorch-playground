@@ -1,20 +1,35 @@
-from torch import Tensor, tensor, diag
-from torch.nn import Module
+from torch import Tensor, tensor, zeros, ones, randn, diag, cuda
+from torch.nn import Module, Sequential, Linear, Sigmoid
 from torch.linalg import matmul
 from torch.nn.functional import linear, sigmoid
 from torch.utils.data import DataLoader
 from torchtext.vocab import Vocab, build_vocab_from_iterator
 import io
 
+# Get cpu or gpu device for training.
+device = "cuda" if cuda.is_available() else "cpu"
+print(f"Using {device}")
+
 def hadamard(a, b):
     """Hadamard product"""
     return linear(a, diag(b))
 
 class GRU(Module):
-    def __init__(self):
-        super().__init__()
-        pass
-    def forward(self):
+    def __init__(self, nh):
+        super(GRU, self).__init__()
+        self.h = randn(nh)  # initial state
+        self.hprev = randn(nh)
+        self.zt = randn(nh)
+        self.Wz = Linear(nh, nh, bias=False)
+        self.Uz = Linear(nh, nh, bias=True)
+    def forward(self, xs):
+        for i, x in enumerate(xs):
+            if i == 0:
+                self.h = hadamard(1 - self.zt, self.hprev) + hadamard(self.zt, self.h)
+                self.hprev = self.h  # update h_(t-1)
+                self.zt = sigmoid()
+            else:
+                pass
         pass
 
 
