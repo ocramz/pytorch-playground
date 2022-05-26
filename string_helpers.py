@@ -74,21 +74,23 @@ large rabbit-hole under the hedge.
     return embedStringBM(voc, testStr, tok)
 
 class TextDataset(Dataset):
-    def __init__(self, fpath, xdim, tok:Tokenize = Tokenize()):
+    def __init__(self, fpath, xdim, strLen = 20, tok:Tokenize = Tokenize()):
         """
         :param fpath: path of text data file
         :param xdim: vector dimension
+        :param strLen: max string length
         :param tok:  tokenizer
         """
         self.fpath = fpath
         self.tok = tok
+        self.strLen = strLen
         self.xdim = xdim
         self.voc = ngramsFromTextFile(fpath, tok)
     def __len__(self):
         _, n = fileBounds(self.fpath)
         return n
     def __getitem__(self, ix):
-        s = stringAtIx(self.fpath, ix)
+        s = stringAtIx(self.fpath, ix, self.strLen)
         print(s)  # debug
         x, y = embedStringBM(self.voc, s, self.tok, self.xdim)
         return x, y
@@ -101,7 +103,7 @@ def fileBounds(fpath):
         fsizeBytes = path.getsize(fpath)
         return numLines, fsizeBytes
 
-def stringAtIx(fpath, ix, k=10):
+def stringAtIx(fpath, ix, k):
     # with open(fpath) as f:
     #     numLines = len(f.readlines())
     #     fsizeBytes = path.getsize(fpath)
