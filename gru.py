@@ -3,9 +3,12 @@ from torch.nn import Module, Sequential, Linear, Sigmoid
 from torch.linalg import matmul
 from torch.nn.functional import linear, sigmoid, tanh, one_hot
 from torch.utils.data import DataLoader
+from torchtext.data import get_tokenizer
 from torchtext.vocab import Vocab, vocab, build_vocab_from_iterator
 from collections import Counter, OrderedDict
-import io
+
+
+from string_helpers import mkVocab, embedString, Tokenize
 
 # Get cpu or gpu device for training.
 device = "cuda" if cuda.is_available() else "cpu"
@@ -62,31 +65,12 @@ model = GRU(5, 10).to(device)
 print(model)
 
 
-def yield_tokens(file_path, sep=' '):
-    with io.open(file_path, encoding='utf-8', mode='r') as f:
-        for line in f:
-            yield line.strip(sep).split(sep)
-
-
-def embedString(voc:Vocab, s:str, sep=' '):
-    """tokenize the string and look up the tokens in the Vocab (dictionary) object"""
-    iis = s.strip(sep).split(sep)
-    ils = voc.lookup_indices(iis)
-    return tensor(ils)
-
-
-def mkVocab(file_path):
-    """build a Vocab out of a text file"""
-    v = build_vocab_from_iterator(yield_tokens(file_path),
-                                  specials=["<unk>"])
-    v.set_default_index(0)
-    return v
-
 
 if __name__ == '__main__':
     fpath = 'data/alice'
-    voc = mkVocab(fpath)
+    tok = Tokenize()
+    voc = mkVocab(fpath, tok)
     print(voc.lookup_token(0))
-    print(embedString(voc, 'Alice took a xyz'))
+    print(embedString(voc, 'Alice took a xyz and found it disagree', tok))
     # for v in voc:
     #     print(v)
