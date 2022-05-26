@@ -34,10 +34,12 @@ class IMap:
 
 class BiMap:
     """bidirectional map"""
-    def __init__(self):
+    def __init__(self, xs=[], defaultIx=0):
         self.i = 0
         self.dk = IMap()
         self.dv = IMap()
+        self.defaultIx = defaultIx
+        self.fromIter(xs)
     def __len__(self):
         return len(self.dk)
     def __repr__(self):
@@ -50,6 +52,13 @@ class BiMap:
     def lookupV(self, v):
         """lookup a value"""
         return self.dv.lookup(v)
+    def lookupVD(self, v):
+        """lookup a value with default in case not found"""
+        km = self.lookupV(v)
+        if km is None:
+            return self.defaultIx
+        else:
+            return km
     def lookupKs(self, ks):
         """lookup multiple keys"""
         for k in ks:
@@ -58,6 +67,9 @@ class BiMap:
         """lookup multiple values"""
         for v in vs:
             yield self.lookupV(v)
+    def lookupVDs(self, vs):
+        for v in vs:
+            yield self.lookupVD(v)
     def insert(self, k, v):
         """insert with duplication"""
         vl = self.lookupK(k)
@@ -78,5 +90,6 @@ class BiMap:
         self.dv.insert(v, k)
         self.i += 1
     def fromIter(self, vs):
+        """append elements without duplication"""
         for v in vs:
             self.insertV(v)
