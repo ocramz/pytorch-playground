@@ -1,9 +1,10 @@
 from torch import Tensor, tensor, zeros, ones, randn, diag, cuda, _assert, Size
 from torch.nn import Module, Sequential, Linear, Sigmoid
 from torch.linalg import matmul
-from torch.nn.functional import linear, sigmoid, tanh
+from torch.nn.functional import linear, sigmoid, tanh, one_hot
 from torch.utils.data import DataLoader
-from torchtext.vocab import Vocab, build_vocab_from_iterator
+from torchtext.vocab import Vocab, vocab, build_vocab_from_iterator
+from collections import Counter, OrderedDict
 import io
 
 # Get cpu or gpu device for training.
@@ -11,12 +12,23 @@ device = "cuda" if cuda.is_available() else "cpu"
 print(f"Using {device}")
 
 
+def ordHistogram(xs):
+    """histogram in decreasing count order"""
+    count = Counter(xs)
+    return OrderedDict(sorted(count.items(), key=lambda x: x[1], reverse=True))
+
+def oneHot(v: Vocab, keys):
+    """one-hot encoding of a vector given a vocabulary
+    :returns Tensor"""
+    return one_hot(tensor(v(keys)), num_classes=len(voc))
+
 def assertIsVector(x: Tensor):
     _assert(len(x.size()) == 1, f'{x} should be a vector')
 
 
-def hadamard(a, b):
-    """Hadamard (componentwise) product of two vectors"""
+def hadamard(a: Tensor, b: Tensor):
+    """Hadamard (componentwise) product of two vectors
+    :returns Tensor"""
     _assert(a.size() == b.size(), 'arguments should have the same size')
     assertIsVector(a)
     assertIsVector(b)
@@ -56,7 +68,7 @@ def yield_tokens(file_path, sep=' '):
             yield line.strip(sep).split(sep)
 
 
-def embedString(voc, s, sep=' '):
+def embedString(voc:Vocab, s:str, sep=' '):
     """tokenize the string and look up the tokens in the Vocab (dictionary) object"""
     iis = s.strip(sep).split(sep)
     ils = voc.lookup_indices(iis)
