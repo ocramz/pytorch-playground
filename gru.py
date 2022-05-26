@@ -62,15 +62,13 @@ class GRU(Module):
             o.hprev = o.h  # update h_(t-1)
 
 model = GRU(5, 10).to(device)
-print(model)
-
-
+# print(model)
 
 if __name__ == '__main__':
     fpath = 'data/alice'
-    tok = Tokenize()
+    tok = Tokenize(sep=',. ()\n_“”')
     voc = mkVocab(fpath, tok)
-    print(voc.lookup_token(0))
+    # print(voc.lookup_token(0))
     print(embedString(voc, 'Alice took a xyz and found it disagree', tok))
     # for v in voc:
     #     print(v)
