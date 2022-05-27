@@ -18,7 +18,7 @@ class GRUClassifier(Module):
         """
         super(GRUClassifier, self).__init__()
         self.gru = GRU(nh, d)
-        self.out = Linear(cats, nh)
+        self.out = Linear(nh, cats, bias=False)
     def forward(o, xs):
         y = o.gru(xs)
         y2 = softmax(o.out(y))

@@ -22,7 +22,7 @@ training_loader = DataLoader(dataset, batch_size=bsize, shuffle=True)
 
 # # model
 model = GRUClassifier(5, xdim, cats).to(device)
-# print(model)
+print(model)
 # # loss
 loss_fn = CrossEntropyLoss()
 # # optimizer
@@ -38,8 +38,10 @@ def train1():
     running_loss = 0.
     for i, data in enumerate(training_loader):
         inputs, labels = data  # get data batch
+        # print(labels) # debug
         optim.zero_grad()  # zero out gradient
         outputs = model(inputs)  # eval model
+        # print(outputs)
         loss = loss_fn(outputs, labels)  # compute loss
         loss.backward()  # compute gradient of loss
         optim.step()

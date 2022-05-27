@@ -91,7 +91,7 @@ class TextDataset(Dataset):
         return n
     def __getitem__(self, ix):
         s = stringAtIx(self.fpath, ix, self.strLen)
-        print(s)  # debug
+        # print(s)  # debug
         x, y = embedStringBM(self.voc, s, self.tok, self.xdim)
         c = self.numClasses()
         y_onehot = oneHot(y, c)
