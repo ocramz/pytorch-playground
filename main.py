@@ -38,10 +38,10 @@ def train1():
     running_loss = 0.
     for i, data in enumerate(training_loader):
         inputs, labels = data  # get data batch
-        # print(labels) # debug
+        print(f'LABELS : {labels.size()}') # debug
         optim.zero_grad()  # zero out gradient
         outputs = model(inputs)  # eval model
-        # print(outputs)
+        print(f'OUTPUTS : {outputs.size()}')
         loss = loss_fn(outputs, labels)  # compute loss
         loss.backward()  # compute gradient of loss
         optim.step()

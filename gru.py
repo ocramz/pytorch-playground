@@ -1,7 +1,7 @@
-from torch import Tensor, tensor, zeros, ones, randn, diag, cuda, _assert, Size, transpose
+from torch import Tensor, tensor, zeros, ones, randn, diag, cuda, _assert, sigmoid,tanh, Size, transpose
 from torch.nn import Module, Sequential, Linear, Sigmoid
 from torch.linalg import matmul
-from torch.nn.functional import linear, sigmoid, tanh, one_hot, softmax
+from torch.nn.functional import linear, one_hot, softmax
 # from torch.utils.data import DataLoader
 # from torchtext.data import get_tokenizer
 from torchtext.vocab import Vocab, vocab, build_vocab_from_iterator
@@ -19,9 +19,9 @@ class GRUClassifier(Module):
         super(GRUClassifier, self).__init__()
         self.gru = GRU(nh, d)
         self.out = Linear(nh, cats, bias=False)
-    def forward(o, xs):
-        y = o.gru(xs)
-        y2 = softmax(o.out(y))
+    def forward(o, x):
+        y = o.gru(x)
+        y2 = softmax(o.out(y), dim=0)
         return y2
 
 
@@ -44,13 +44,13 @@ class GRU(Module):
         self.Uh = Linear(nh, nh, bias=False)  # nh * nh
         self.Uz = Linear(nh, nh, bias=True)
         self.Ur = Linear(nh, nh, bias=True)
-    def forward(o, xs):
-        for i, x in enumerate(xs):
-            o.h = hadamard(1 - o.zt, o.hprev) + hadamard(o.zt, o.htilde)
-            o.zt = sigmoid(o.Wz(x) + o.Uz(o.hprev))
-            o.htilde = tanh(o.Wh(x) + o.Uh(o.hprev))
-            o.rt = sigmoid(o.Wr(x) + o.Ur(o.hprev))
-            o.hprev = o.h  # update h_(t-1)
+    def forward(o, x):
+        # for i, x in enumerate(xs):
+        o.h = hadamard(1 - o.zt, o.hprev) + hadamard(o.zt, o.htilde)
+        o.zt = sigmoid(o.Wz(x) + o.Uz(o.hprev))
+        o.htilde = tanh(o.Wh(x) + o.Uh(o.hprev))
+        o.rt = sigmoid(o.Wr(x) + o.Ur(o.hprev))
+        o.hprev = o.h  # update h_(t-1)
         h_fin = o.h
         return h_fin
 
