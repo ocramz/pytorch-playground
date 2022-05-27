@@ -1,15 +1,37 @@
-from torch import Tensor, tensor, zeros, ones, randn, diag, cuda, _assert, Size
+from torch import Tensor, tensor, zeros, ones, randn, diag, cuda, _assert, Size, transpose
 from torch.nn import Module, Sequential, Linear, Sigmoid
 from torch.linalg import matmul
-from torch.nn.functional import linear, sigmoid, tanh, one_hot
+from torch.nn.functional import linear, sigmoid, tanh, one_hot, softmax
 # from torch.utils.data import DataLoader
 # from torchtext.data import get_tokenizer
 from torchtext.vocab import Vocab, vocab, build_vocab_from_iterator
 from collections import Counter, OrderedDict
 # from string_helpers import mkVocab, embedString, Tokenize
 
+class GRUClassifier(Module):
+    """GRU followed by a linear classification layer"""
+    def __init__(self, nh:int, d:int, cats:int):
+        """
+        :param nh: dim of state vector h
+        :param d: dim of data vectors x
+        :param cats: number of categories
+        """
+        super(GRUClassifier, self).__init__()
+        self.gru = GRU(nh, d)
+        self.out = Linear(cats, nh)
+    def forward(o, xs):
+        y = o.gru(xs)
+        y2 = softmax(o.out(y))
+        return y2
+
+
 class GRU(Module):
+    """gated recurrent unit"""
     def __init__(self, nh:int, d:int):
+        """
+        :param nh: dim of state vector h
+        :param d: dim of data vectors x
+        """
         super(GRU, self).__init__()
         self.htilde = randn(nh)  # candidate state
         self.hprev = randn(nh)  # h_{t-1} is random at time 0
@@ -22,7 +44,6 @@ class GRU(Module):
         self.Uh = Linear(nh, nh, bias=False)  # nh * nh
         self.Uz = Linear(nh, nh, bias=True)
         self.Ur = Linear(nh, nh, bias=True)
-
     def forward(o, xs):
         for i, x in enumerate(xs):
             o.h = hadamard(1 - o.zt, o.hprev) + hadamard(o.zt, o.htilde)
@@ -49,10 +70,7 @@ def ordHistogram(xs):
     count = Counter(xs)
     return OrderedDict(sorted(count.items(), key=lambda x: x[1], reverse=True))
 
-def oneHot(voc: Vocab, keys):
-    """one-hot encoding of a vector given a vocabulary
-    :returns Tensor"""
-    return one_hot(tensor(voc(keys)), num_classes=len(voc))
+
 
 if __name__ == '__main__':
     pass

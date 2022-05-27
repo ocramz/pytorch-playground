@@ -3,29 +3,29 @@ from torch.nn import MSELoss, CrossEntropyLoss
 from torch.optim import SGD
 from torch.utils.data import DataLoader
 from string_helpers import TextDataset
-from gru import GRU
+from gru import GRUClassifier
 
 # Get cpu or gpu device for training.
 device = "cuda" if cuda.is_available() else "cpu"
 print(f"Using {device}")
-
-# hparams
+# # hparams
 num_epochs = 60
 learning_rate = 0.001
-
-# dataset
+bsize = 32  # batch size
+# # dataset
 fpath = 'data/alice'
 xdim = 20  # vector dimension
 strLen = 30
 dataset = TextDataset(fpath, xdim, strLen)
-training_loader = DataLoader(dataset, batch_size=32, shuffle=True)
+cats = dataset.numClasses()
+training_loader = DataLoader(dataset, batch_size=bsize, shuffle=True)
 
-# model
-model = GRU(5, xdim).to(device)
+# # model
+model = GRUClassifier(5, xdim, cats).to(device)
 # print(model)
-
-# loss
+# # loss
 loss_fn = CrossEntropyLoss()
+# # optimizer
 optim = SGD(model.parameters(), lr=learning_rate)
 
 def train():
@@ -37,10 +37,10 @@ def train():
 def train1():
     running_loss = 0.
     for i, data in enumerate(training_loader):
-        inputs, labels = data
+        inputs, labels = data  # get data batch
         optim.zero_grad()  # zero out gradient
-        outputs = model(inputs)
-        loss = loss_fn(outputs, labels)
+        outputs = model(inputs)  # eval model
+        loss = loss_fn(outputs, labels)  # compute loss
         loss.backward()  # compute gradient of loss
         optim.step()
         running_loss += loss.item()

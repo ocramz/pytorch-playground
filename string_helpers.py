@@ -1,4 +1,4 @@
-from torch import Tensor, tensor, zeros, ones, randn, diag, cuda, Size, from_numpy
+from torch import Tensor, tensor, zeros, ones, randn, diag, cuda, Size, from_numpy, arange
 from torch.utils.data import Dataset, DataLoader
 import numpy as np
 # from torchtext.data import get_tokenizer
@@ -93,9 +93,23 @@ class TextDataset(Dataset):
         s = stringAtIx(self.fpath, ix, self.strLen)
         print(s)  # debug
         x, y = embedStringBM(self.voc, s, self.tok, self.xdim)
-        return x, y
+        c = self.numClasses()
+        y_onehot = oneHot(y, c)
+        return x, y_onehot
+    def numClasses(self):
+        """size of the vocabulary is the number of classes"""
+        return len(self.voc)
 
 
+def oneHot(i:int, nclasses:int):
+    """one-hot encoding of a vector given a vocabulary
+    :param i:
+    :param nclasses: number of classes
+    :returns Tensor of float32"""
+    v = np.zeros(nclasses, dtype=np.float32)
+    np.put(v, i, 1)
+    y = from_numpy(v)
+    return y
 
 
 
