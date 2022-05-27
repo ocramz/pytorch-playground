@@ -31,7 +31,7 @@ optim = SGD(model.parameters(), lr=learning_rate)
 def train():
     for epoch in range(num_epochs):
         print(f'epoch {epoch}')
-        model.train(True)
+        model.train(True)  # thaw weights
         avg_loss = train1()
 
 def train1():

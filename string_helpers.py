@@ -97,22 +97,26 @@ class TextDataset(Dataset):
 
 
 
-def fileBounds(fpath):
-    with open(fpath) as f:
-        numLines = len(f.readlines())
-        fsizeBytes = path.getsize(fpath)
-        return numLines, fsizeBytes
+
 
 def stringAtIx(fpath, ix, k):
-    # with open(fpath) as f:
-    #     numLines = len(f.readlines())
-    #     fsizeBytes = path.getsize(fpath)
+    """
+    :param fpath: file path
+    :param ix: linear index >= 0
+    :param k: max string length
+    :returns string of length (at most) k starting at index ix"""
     numLines, fsizeBytes = fileBounds(fpath)
     bytesPerLine = fsizeBytes // numLines
     m = ix // numLines + 1
     n = ix % bytesPerLine
     return stringFromTextFile(fpath, m, n, k)
 
+def fileBounds(fpath):
+    """:returns number of lines, file size in bytes"""
+    with open(fpath) as f:
+        numLines = len(f.readlines())
+        fsizeBytes = path.getsize(fpath)
+        return numLines, fsizeBytes
 
 def stringFromTextFile(fpath, m, n, k):
     """load a text string of given length from a given row, colum of a file
@@ -141,14 +145,6 @@ def ngramsFromTextFile(fpath, tok:Tokenize = Tokenize()):
 
 
 
-def yield_tokens(file_path, tok: Tokenize):
-    with io.open(file_path, encoding='utf-8', mode='r') as f:
-        for line in f:
-            toksClean = tok.split(line)
-            print(toksClean)  # debug
-            if toksClean:
-                yield toksClean
-
 def embedStringBM(voc: BiMap, s:str, tok:Tokenize, dim0: int=10):
     """:returns a Tensor of given dimension and label. Pads missing elements or removes extra ones"""
     iis = tok.ngrams(s)
@@ -163,19 +159,29 @@ def embedStringBM(voc: BiMap, s:str, tok:Tokenize, dim0: int=10):
         ilsPrep = ilsl + ([z] * (dim - d))
     else:
         ilsPrep = ilsl[0:dim]
-    x = from_numpy(np.fromiter(ilsPrep[0:dim0], dtype=int))
+    x = from_numpy(np.fromiter(ilsPrep[0:dim0], dtype=np.float32))
     y = ilsPrep[-1]  # label is the _last_ element
     return x, y
 
-def embedString(voc: Vocab, s: str, tok: Tokenize):
-    """tokenize the string and look up the tokens in the Vocab (dictionary) object"""
-    iis = tok.split(s)
-    ils = voc.lookup_indices(iis)
-    return tensor(ils)
+# # Vocab-based
 
-def mkVocab(file_path, tok: Tokenize):
-    """build a Vocab out of a text file"""
-    v = build_vocab_from_iterator(yield_tokens(file_path, tok),
-                                  specials=["<unk>"])
-    v.set_default_index(0)
-    return v
+# def embedString(voc: Vocab, s: str, tok: Tokenize):
+#     """tokenize the string and look up the tokens in the Vocab (dictionary) object"""
+#     iis = tok.split(s)
+#     ils = voc.lookup_indices(iis)
+#     return tensor(ils)
+#
+# def mkVocab(file_path, tok: Tokenize):
+#     """build a Vocab out of a text file"""
+#     v = build_vocab_from_iterator(yield_tokens(file_path, tok),
+#                                   specials=["<unk>"])
+#     v.set_default_index(0)
+#     return v
+#
+# def yield_tokens(file_path, tok: Tokenize):
+#     with io.open(file_path, encoding='utf-8', mode='r') as f:
+#         for line in f:
+#             toksClean = tok.split(line)
+#             print(toksClean)  # debug
+#             if toksClean:
+#                 yield toksClean

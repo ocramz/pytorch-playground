@@ -16,12 +16,12 @@ class GRU(Module):
         self.h = randn(nh)  # h_{t} is random at time 0
         self.zt = randn(nh)  # update gate
         self.rt = randn(nh)  # reset gate
-        self.Wh = Linear(nh, d, bias=False)
-        self.Wz = Linear(nh, d, bias=False)
-        self.Wr = Linear(nh, d, bias=False)
-        self.Uh = Linear(nh, d, bias=False)
-        self.Uz = Linear(nh, d, bias=True)
-        self.Ur = Linear(nh, d, bias=True)
+        self.Wh = Linear(d, nh, bias=False)  # nh * d
+        self.Wz = Linear(d, nh, bias=False)
+        self.Wr = Linear(d, nh, bias=False)
+        self.Uh = Linear(nh, nh, bias=False)  # nh * nh
+        self.Uz = Linear(nh, nh, bias=True)
+        self.Ur = Linear(nh, nh, bias=True)
 
     def forward(o, xs):
         for i, x in enumerate(xs):
@@ -29,12 +29,9 @@ class GRU(Module):
             o.zt = sigmoid(o.Wz(x) + o.Uz(o.hprev))
             o.htilde = tanh(o.Wh(x) + o.Uh(o.hprev))
             o.rt = sigmoid(o.Wr(x) + o.Ur(o.hprev))
-            # o.zt = sigmoid(matmul(o.Wz, x) + matmul(o.Uz, o.hprev))
-            # o.htilde = tanh(matmul(o.Wh, x) + hadamard(o.rt, matmul(o.Uh, o.hprev)))
-            # o.rt = sigmoid(matmul(o.Wr, x) + matmul(o.Ur, o.hprev))
             o.hprev = o.h  # update h_(t-1)
-
-
+        h_fin = o.h
+        return h_fin
 
 def hadamard(a: Tensor, b: Tensor):
     """Hadamard (componentwise) product of two vectors
