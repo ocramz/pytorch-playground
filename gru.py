@@ -45,12 +45,12 @@ class GRU(Module):
         self.Uz = Linear(nh, nh, bias=True)
         self.Ur = Linear(nh, nh, bias=True)
     def forward(o, x):
-        # for i, x in enumerate(xs):
-        o.h = hadamard(1 - o.zt, o.hprev) + hadamard(o.zt, o.htilde)
-        o.zt = sigmoid(o.Wz(x) + o.Uz(o.hprev))
-        o.htilde = tanh(o.Wh(x) + o.Uh(o.hprev))
-        o.rt = sigmoid(o.Wr(x) + o.Ur(o.hprev))
-        o.hprev = o.h  # update h_(t-1)
+        for xt in x:
+            o.h = hadamard(1 - o.zt, o.hprev) + hadamard(o.zt, o.htilde)
+            o.zt = sigmoid(o.Wz(xt) + o.Uz(o.hprev))
+            o.htilde = tanh(o.Wh(xt) + o.Uh(o.hprev))
+            o.rt = sigmoid(o.Wr(xt) + o.Ur(o.hprev))
+            o.hprev = o.h  # update h_(t-1)
         h_fin = o.h
         return h_fin
 

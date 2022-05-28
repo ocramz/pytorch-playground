@@ -71,7 +71,10 @@ large rabbit-hole under the hedge.
     ngrs = tok.ngrams(s)
     voc = BiMap(ngrs)
     testStr = 'books are nice and not boring'
-    return embedStringBM(voc, testStr, tok)
+    # return embedStringBM(voc, testStr, tok)
+    # return embedStringOH(voc, testStr, tok)
+    x, y = embedStringOH(voc, testStr, tok)
+    print(x.size(), y.size())
 
 class TextDataset(Dataset):
     def __init__(self, fpath, xdim, strLen = 20, tok:Tokenize = Tokenize()):
@@ -102,8 +105,8 @@ class TextDataset(Dataset):
 
 
 def oneHot(i:int, nclasses:int):
-    """one-hot encoding of a vector given a vocabulary
-    :param i:
+    """one-hot encoding of a categorical variable
+    :param i: hot index
     :param nclasses: number of classes
     :returns Tensor of float32"""
     v = np.zeros(nclasses, dtype=np.float32)
@@ -134,6 +137,7 @@ def fileBounds(fpath):
 
 def stringFromTextFile(fpath, m, n, k):
     """load a text string of given length from a given row, colum of a file
+    :param fpath: file path
     :param m: line #
     :param n: column #
     :param k: string max length
@@ -149,6 +153,8 @@ def stringFromTextFile(fpath, m, n, k):
 
 def ngramsFromTextFile(fpath, tok:Tokenize = Tokenize()):
     """build a vocabulary of n-grams from a text file
+    :param fpath: path of source file
+    :param tok: text tokenizer
     :returns BiMap of text n-grams"""
     bm = BiMap()
     with io.open(fpath, encoding='utf-8', mode='r') as f:
@@ -158,26 +164,66 @@ def ngramsFromTextFile(fpath, tok:Tokenize = Tokenize()):
         return bm
 
 
-
-def embedStringBM(voc: BiMap, s:str, tok:Tokenize, dim0: int=10):
-    """:returns a Tensor of given dimension and label. Pads missing elements or removes extra ones"""
-    iis = tok.ngrams(s)
-    ils = voc.lookupVDs(iis)
-    z = voc.defaultIx
+def embedStringOH(voc: BiMap, s:str, tok:Tokenize, dim0: int=10):
+    """ embed a string into a vector space via a 1-hot encoding of its ngrams
+    Pads missing elements or removes extra ones in the encoded vector elements.
+    :param voc: vocabulary
+    :param s: string to be embedded
+    :param tok: text tokenizer
+    :param dim0: vector dimension of embedding
+    :returns (dim0 * nclasses) Tensor of and 1-hot (nclasses) Tensor label.
+    """
+    iis = tok.ngrams(s)  # tokenize string into ngrams
+    ils = voc.lookupVDs(iis)  # lookup the ngrams in the vocabulary
+    nclasses = len(voc)  # size of vocabulary
+    z = voc.defaultIx  # "unknown" symbol
     ilsl = list(ils)
     d = len(ilsl)  # length of n-gram list
     dim = dim0 + 1
     if d == dim:
         ilsPrep = ilsl
     elif d < dim:
-        ilsPrep = ilsl + ([z] * (dim - d))
+        ilsPrep = ilsl + ([z] * (dim - d))  # pad with "unknown" symbol
+    else:
+        ilsPrep = ilsl[0:dim]
+    x = ilsPrep[0:dim0]
+    tx = zeros([dim0, nclasses])
+    for i, xi in enumerate(x):
+        tx[i, :] = oneHot(xi, nclasses)
+    y = ilsPrep[-1]  # label is the _last_ element
+    ty = oneHot(y, nclasses)
+    return tx, ty
+
+def embedStringBM(voc: BiMap, s:str, tok:Tokenize, dim0: int=10):
+    """  embed a string into a vector space
+    :param voc: vocabulary
+    :param s: string to be embedded
+    :param tok: text tokenizer
+    :param dim0: vector dimension of embedding
+    :returns a Tensor of given dimension and label. Pads missing elements or removes extra ones
+    """
+    iis = tok.ngrams(s)  # tokenize string into ngrams
+    ils = voc.lookupVDs(iis)  # lookup the ngrams in the vocabulary
+    z = voc.defaultIx  # "unknown" symbol
+    ilsl = list(ils)
+    d = len(ilsl)  # length of n-gram list
+    dim = dim0 + 1
+    if d == dim:
+        ilsPrep = ilsl
+    elif d < dim:
+        ilsPrep = ilsl + ([z] * (dim - d))  # pad with "unknown" symbol
     else:
         ilsPrep = ilsl[0:dim]
     x = from_numpy(np.fromiter(ilsPrep[0:dim0], dtype=np.float32))
     y = ilsPrep[-1]  # label is the _last_ element
     return x, y
 
-# # Vocab-based
+
+
+
+
+
+# # torchtext Vocab-based
 
 # def embedString(voc: Vocab, s: str, tok: Tokenize):
 #     """tokenize the string and look up the tokens in the Vocab (dictionary) object"""

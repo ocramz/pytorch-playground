@@ -1,5 +1,6 @@
 
 class IMap:
+    """integer-indexed map"""
     def __init__(self):
         self.i = 0
         self.d = {}
@@ -20,15 +21,18 @@ class IMap:
         except KeyError as e:
             return None
     def insert(self, k, v):
+        """insert iff the index is not already present"""
         v1 = self.lookup(k)
         if v1 is None:
             self.d[k] = v
             self.i += 1
     def append(self, v):
+        """append element to a fresh index"""
         k = self.i
         self.d[k] = v
         self.i += 1
     def fromIter(self, vs):
+        """append sequentially from an iterable"""
         for v in vs:
             self.append(v)
 
@@ -71,13 +75,13 @@ class BiMap:
         for v in vs:
             yield self.lookupVD(v)
     def insert(self, k, v):
-        """insert with duplication"""
+        """insert iff an index is not already present (i.e. with duplication of values)"""
         vl = self.lookupK(k)
         if vl is None:
             self.dk.insert(k, v)
             self.dv.insert(v, k)
     def insertV(self, v):
-        """insert without duplication"""
+        """insert iff a value is not already present (i.e. without duplication)"""
         kl = self.lookupV(v)
         if kl is None:
             k = self.i
@@ -85,11 +89,12 @@ class BiMap:
             self.dv.insert(v, k)
             self.i += 1
     def append(self, v):
+        """append element at a fresh index"""
         k = self.i
         self.dk.insert(k, v)
         self.dv.insert(v, k)
         self.i += 1
     def fromIter(self, vs):
-        """append elements without duplication"""
+        """append elements from an iterable (without duplication)"""
         for v in vs:
             self.insertV(v)

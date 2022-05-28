@@ -15,13 +15,14 @@ bsize = 32  # batch size
 # # dataset
 fpath = 'data/alice'
 xdim = 20  # vector dimension
+xtdim = 1  # dimension of embedding at a given timestep
 strLen = 30
 dataset = TextDataset(fpath, xdim, strLen)
 cats = dataset.numClasses()
 training_loader = DataLoader(dataset, batch_size=bsize, shuffle=True)
 
 # # model
-model = GRUClassifier(5, xdim, cats).to(device)
+model = GRUClassifier(5, xtdim, cats).to(device)
 print(model)
 # # loss
 loss_fn = CrossEntropyLoss()
