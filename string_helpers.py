@@ -94,11 +94,8 @@ class TextDataset(Dataset):
         return n
     def __getitem__(self, ix):
         s = stringAtIx(self.fpath, ix, self.strLen)
-        # print(s)  # debug
-        x, y = embedStringBM(self.voc, s, self.tok, self.xdim)
-        c = self.numClasses()
-        y_onehot = oneHot(y, c)
-        return x, y_onehot
+        x_oh, y_oh = embedStringOH(self.voc, s, self.tok, self.xdim)
+        return x_oh, y_oh
     def numClasses(self):
         """size of the vocabulary is the number of classes"""
         return len(self.voc)
@@ -113,7 +110,6 @@ def oneHot(i:int, nclasses:int):
     np.put(v, i, 1)
     y = from_numpy(v)
     return y
-
 
 
 def stringAtIx(fpath, ix, k):

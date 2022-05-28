@@ -15,14 +15,14 @@ bsize = 32  # batch size
 # # dataset
 fpath = 'data/alice'
 xdim = 20  # vector dimension
-xtdim = 1  # dimension of embedding at a given timestep
+dlatent = 5  # dimension of latent vector h
 strLen = 30
 dataset = TextDataset(fpath, xdim, strLen)
 cats = dataset.numClasses()
 training_loader = DataLoader(dataset, batch_size=bsize, shuffle=True)
 
 # # model
-model = GRUClassifier(5, xtdim, cats).to(device)
+model = GRUClassifier(dlatent, cats).to(device)
 print(model)
 # # loss
 loss_fn = CrossEntropyLoss()
@@ -39,16 +39,16 @@ def train1():
     running_loss = 0.
     for i, data in enumerate(training_loader):
         inputs, labels = data  # get data batch
-        print(f'LABELS : {labels.size()}') # debug
         optim.zero_grad()  # zero out gradient
         outputs = model(inputs)  # eval model
-        print(f'OUTPUTS : {outputs.size()}')
+        # print(f'INPUTS : {inputs.size()}, LABELS : {labels.size()}, OUTPUTS : {outputs.size()}')
         loss = loss_fn(outputs, labels)  # compute loss
         loss.backward()  # compute gradient of loss
         optim.step()
         running_loss += loss.item()
-        if i % 1000 == 999:
+        if i % 10 == 9:
             last_loss = running_loss / 1000  # loss per batch
+            # print(f'LOSS : {last_loss}')
     return last_loss
 
 

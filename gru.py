@@ -1,4 +1,4 @@
-from torch import Tensor, tensor, zeros, ones, randn, diag, cuda, _assert, sigmoid,tanh, Size, transpose
+from torch import Tensor, tensor, zeros, zeros_like, ones, randn, diag, cuda, _assert, sigmoid,tanh, Size, transpose
 from torch.nn import Module, Sequential, Linear, Sigmoid
 from torch.linalg import matmul
 from torch.nn.functional import linear, one_hot, softmax
@@ -10,14 +10,13 @@ from collections import Counter, OrderedDict
 
 class GRUClassifier(Module):
     """GRU followed by a linear classification layer"""
-    def __init__(self, nh:int, d:int, cats:int):
+    def __init__(self, nh:int, cats:int):
         """
         :param nh: dim of state vector h
-        :param d: dim of data vectors x
         :param cats: number of categories
         """
         super(GRUClassifier, self).__init__()
-        self.gru = GRU(nh, d)
+        self.gru = GRU(nh, cats)
         self.out = Linear(nh, cats, bias=False)
     def forward(o, x):
         y = o.gru(x)
@@ -30,29 +29,35 @@ class GRU(Module):
     def __init__(self, nh:int, d:int):
         """
         :param nh: dim of state vector h
-        :param d: dim of data vectors x
+        :param d: embedding dim of x_t (= # of categories)
         """
         super(GRU, self).__init__()
-        self.htilde = randn(nh)  # candidate state
-        self.hprev = randn(nh)  # h_{t-1} is random at time 0
-        self.h = randn(nh)  # h_{t} is random at time 0
-        self.zt = randn(nh)  # update gate
-        self.rt = randn(nh)  # reset gate
+        self.nh = nh  # latent vector dimension
+        self.d = d  # embedding dimension
         self.Wh = Linear(d, nh, bias=False)  # nh * d
         self.Wz = Linear(d, nh, bias=False)
         self.Wr = Linear(d, nh, bias=False)
         self.Uh = Linear(nh, nh, bias=False)  # nh * nh
         self.Uz = Linear(nh, nh, bias=True)
         self.Ur = Linear(nh, nh, bias=True)
-    def forward(o, x):
-        for xt in x:
-            o.h = hadamard(1 - o.zt, o.hprev) + hadamard(o.zt, o.htilde)
-            o.zt = sigmoid(o.Wz(xt) + o.Uz(o.hprev))
-            o.htilde = tanh(o.Wh(xt) + o.Uh(o.hprev))
-            o.rt = sigmoid(o.Wr(xt) + o.Ur(o.hprev))
-            o.hprev = o.h  # update h_(t-1)
-        h_fin = o.h
-        return h_fin
+    def forward(o, xbatch):
+        nbatch = xbatch.size(0)
+        t = zeros(nbatch, o.nh)
+        # print(f'forward t size : {t.size()}')
+        for i, x in enumerate(xbatch):
+            o.htilde = randn(o.nh)  # candidate state
+            o.hprev = randn(o.nh)  # h_{t-1} is random at time 0
+            o.h = randn(o.nh)  # h_{t} is random at time 0
+            o.zt = randn(o.nh)  # update gate
+            o.rt = randn(o.nh)  # reset gate
+            for xt in x:
+                o.h = hadamard(1 - o.zt, o.hprev) + hadamard(o.zt, o.htilde)
+                o.zt = sigmoid(o.Wz(xt) + o.Uz(o.hprev))
+                o.htilde = tanh(o.Wh(xt) + o.Uh(o.hprev))
+                o.rt = sigmoid(o.Wr(xt) + o.Ur(o.hprev))
+                o.hprev = o.h  # update h_(t-1)
+            t[i, :] = o.h
+        return t # h_fin
 
 def hadamard(a: Tensor, b: Tensor):
     """Hadamard (componentwise) product of two vectors
