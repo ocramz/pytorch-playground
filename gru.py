@@ -1,11 +1,11 @@
 from torch import Tensor, tensor, zeros, zeros_like, ones, randn, diag, cuda, _assert, sigmoid,tanh, Size, transpose
 from torch.nn import Module, Sequential, Linear, Sigmoid
-from torch.linalg import matmul
+# from torch.linalg import matmul
 from torch.nn.functional import linear, one_hot, softmax
 # from torch.utils.data import DataLoader
 # from torchtext.data import get_tokenizer
-from torchtext.vocab import Vocab, vocab, build_vocab_from_iterator
-from collections import Counter, OrderedDict
+# from torchtext.vocab import Vocab, vocab, build_vocab_from_iterator
+# from collections import Counter, OrderedDict
 # from string_helpers import mkVocab, embedString, Tokenize
 
 class GRUClassifier(Module):
@@ -20,30 +20,29 @@ class GRUClassifier(Module):
         self.out = Linear(nh, cats, bias=False)
     def forward(o, x):
         y = o.gru(x)
-        y2 = softmax(o.out(y), dim=0)
+        # y2 = softmax(o.out(y), dim=0)
+        y2 = o.out(y)
         return y2
 
 
 class GRU(Module):
     """gated recurrent unit"""
-    def __init__(self, nh:int, d:int):
+    def __init__(self, nh:int, cats:int):
         """
         :param nh: dim of state vector h
-        :param d: embedding dim of x_t (= # of categories)
+        :param cats: embedding dim of x_t (= # of categories)
         """
         super(GRU, self).__init__()
         self.nh = nh  # latent vector dimension
-        self.d = d  # embedding dimension
-        self.Wh = Linear(d, nh, bias=False)  # nh * d
-        self.Wz = Linear(d, nh, bias=False)
-        self.Wr = Linear(d, nh, bias=False)
+        self.Wh = Linear(cats, nh, bias=False)  # nh * d
+        self.Wz = Linear(cats, nh, bias=False)
+        self.Wr = Linear(cats, nh, bias=False)
         self.Uh = Linear(nh, nh, bias=False)  # nh * nh
         self.Uz = Linear(nh, nh, bias=True)
         self.Ur = Linear(nh, nh, bias=True)
     def forward(o, xbatch):
         nbatch = xbatch.size(0)
         t = zeros(nbatch, o.nh)
-        # print(f'forward t size : {t.size()}')
         for i, x in enumerate(xbatch):
             o.htilde = randn(o.nh)  # candidate state
             o.hprev = randn(o.nh)  # h_{t-1} is random at time 0
@@ -62,7 +61,7 @@ class GRU(Module):
 def hadamard(a: Tensor, b: Tensor):
     """Hadamard (componentwise) product of two vectors
     :returns Tensor"""
-    _assert(a.size() == b.size(), 'arguments should have the same size')
+    _assert(a.size() == b.size(), f'arguments should have the same size, rather than {a.size()}, {b.size()}')
     assertIsVector(a)
     assertIsVector(b)
     return linear(a, diag(b))
@@ -70,10 +69,10 @@ def hadamard(a: Tensor, b: Tensor):
 def assertIsVector(x: Tensor):
     _assert(len(x.size()) == 1, f'{x} should be a vector')
 
-def ordHistogram(xs):
-    """histogram in decreasing count order"""
-    count = Counter(xs)
-    return OrderedDict(sorted(count.items(), key=lambda x: x[1], reverse=True))
+# def ordHistogram(xs):
+#     """histogram in decreasing count order"""
+#     count = Counter(xs)
+#     return OrderedDict(sorted(count.items(), key=lambda x: x[1], reverse=True))
 
 
 

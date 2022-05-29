@@ -170,6 +170,7 @@ def embedStringOH(voc: BiMap, s:str, tok:Tokenize, dim0: int=10):
     :returns (dim0 * nclasses) Tensor of and 1-hot (nclasses) Tensor label.
     """
     iis = tok.ngrams(s)  # tokenize string into ngrams
+    # print(list(iis)) # debug
     ils = voc.lookupVDs(iis)  # lookup the ngrams in the vocabulary
     nclasses = len(voc)  # size of vocabulary
     z = voc.defaultIx  # "unknown" symbol
