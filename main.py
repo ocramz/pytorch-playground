@@ -1,22 +1,23 @@
-from torch import cuda, argmax
+from torch import Tensor, cuda, argmax, squeeze, unsqueeze, no_grad
 from torch.nn import MSELoss, CrossEntropyLoss
 from torch.optim import SGD
 from torch.utils.data import DataLoader
 import wandb
-import time
 
 from string_helpers import TextDataset, Tokenize, embedStringOH
 from gru import GRUClassifier
 from gru_orig import GRUClassifierOrig
+from bimap import BiMap
+from misc import Timer
 
 # Get cpu or gpu device for training.
 device = "cuda" if cuda.is_available() else "cpu"
 print(f"Using {device}")
 log_out = False  # enable logging
 # # hparams
-num_epochs = 1
+num_epochs = 1  # number of epochs
 learning_rate = 0.01
-batch_size = 16  # batch size
+batch_size = 3  # batch size
 # # dataset
 fpath = 'data/alice'
 xdim = 20  # vector dimension
@@ -77,37 +78,52 @@ def train1(epoch):
         if epoch == 0 and i == 0 :
             print(f'INPUTS : {inputs.size()}, LABELS : {labels.size()}')
         optim.zero_grad()  # zero out gradient
-        t0 = time.time()  # start timer
+        # t0 = time.time()  # start timer
+        with Timer() as timer:
+            # # # gru.py
+            # outputs = model(inputs)  # eval model
 
-        # # # gru.py
-        # outputs = model(inputs)  # eval model
+            # # # gru_orig.py
+            outputs, h = model(inputs.to(device).float())
 
-        # # # gru_orig.py
-        outputs, h = model(inputs.to(device).float())
-
-        loss = loss_fn(outputs, labels)  # compute loss
-        loss.backward()  # compute gradient of loss
-        optim.step()
-        t1 = time.time()  # stop timer
-        dt = t1 - t0
-        running_loss += loss.item()
-        avg_dt += dt
-        if i == batch_size - 1:
-            avg_batch_loss = running_loss / batch_size  # average loss per batch
-            avg_dt = avg_dt / batch_size
+            loss = loss_fn(outputs, labels)  # compute loss
+            loss.backward()  # compute gradient of loss
+            optim.step()
+            # t1 = time.time()  # stop timer
+            # dt = t1 - t0
+            running_loss += loss.item()
+            avg_dt += timer.dt
+            if i == batch_size - 1:
+                avg_batch_loss = running_loss / batch_size  # average loss per batch
+                avg_dt = avg_dt / batch_size
 
     return avg_batch_loss, avg_dt
 
 def evaluate():
     s = "flavour of cherry-tart, custard, pine-apple"
     x, y = embedStringOH(vocab, s, tok, xdim)
-    print(f'INPUTS : {x.size()}, LABELS : {y.size()}')
+    x = unsqueeze(x, 0)  # model expects batch index as first dimension
+    # print(f'INPUTS : {x.size()}, LABELS : {y.size()}')
+
+    with no_grad():
+        yhat, h = model(x)  # evaluate trained model
+        label = decodeOneHot(y, vocab)
+        label_hat = decodeOneHot(squeeze(yhat, dim=0), vocab)
+
+        # ilabel = argmax(y)
+        # ilabel_hat = argmax(squeeze(yhat, dim=0))
+        # label = list(vocab.lookupKs(ilabel))
+        # label_hat = list(vocab.lookupKs(ilabel_hat))
+
+        # print(f'real : {y.size()}\npredicted : {yhat.size()}')
+        print(f'real : {label}\npredicted : {label_hat}')
+        # print(f'real : {label}, predicted : {label_hat}')
+
+def decodeOneHot(y: Tensor, voc: BiMap):
     ilabel = argmax(y)
-    yhat, h = model(x)  # evaluate trained model
-    ilabel_hat = argmax(yhat)
-    label = vocab.lookupK(ilabel)
-    label_hat = vocab.lookupK(ilabel_hat)
-    print(f'real : {label}, predicted : {label_hat}')
+    print(y.size(), y, ilabel)
+    return list(voc.lookupKs(ilabel))
+
 
 
 if __name__ == '__main__':
