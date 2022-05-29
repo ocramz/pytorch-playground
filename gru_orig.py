@@ -21,12 +21,13 @@ class GRUClassifierOrig(Module):
         self.nlayers = nlayers
         self.gru = GRU(indim, hdim, nlayers, batch_first=True, dropout=drop_prob)
         self.fc = Linear(hdim, outdim)
-        self.relu = ReLU()
+        # self.relu = ReLU()
     def init_hidden(self, batch_size):
         weight = next(self.parameters()).data
         hidden = weight.new(self.nlayers, batch_size, self.hdim).zero_().to(device)
         return hidden
-    def forward(self, xbatch, h):
-        out, h = self.gru(xbatch, h)
-        out2 = self.relu(self.fc(out[:, -1]))
+    def forward(self, xbatch):
+        out, h = self.gru(xbatch)
+        out2 = self.fc(out[:, -1])
+        # out2 = self.relu(self.fc(out[:, -1]))
         return out2, h

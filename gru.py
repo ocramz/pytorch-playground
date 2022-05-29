@@ -1,4 +1,4 @@
-from torch import Tensor, tensor, zeros, zeros_like, ones, randn, diag, cuda, _assert, sigmoid,tanh, Size, transpose
+from torch import Tensor, tensor, zeros, zeros_like, ones, randn, rand, diag, cuda, _assert, sigmoid,tanh, Size, transpose
 from torch.nn import Module, Sequential, Linear, Sigmoid
 # from torch.linalg import matmul
 from torch.nn.functional import linear, one_hot, softmax
@@ -50,10 +50,10 @@ class GRU(Module):
             o.zt = randn(o.nh)  # update gate
             o.rt = randn(o.nh)  # reset gate
             for xt in x:
-                o.h = hadamard(1 - o.zt, o.hprev) + hadamard(o.zt, o.htilde)
+                o.rt = sigmoid(o.Wr(xt) + o.Ur(o.hprev))
                 o.zt = sigmoid(o.Wz(xt) + o.Uz(o.hprev))
                 o.htilde = tanh(o.Wh(xt) + o.Uh(o.hprev))
-                o.rt = sigmoid(o.Wr(xt) + o.Ur(o.hprev))
+                o.h = hadamard(1 - o.zt, o.hprev) + hadamard(o.zt, o.htilde)
                 o.hprev = o.h  # update h_(t-1)
             t[i, :] = o.h
         return t # h_fin
