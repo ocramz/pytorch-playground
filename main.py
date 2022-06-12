@@ -122,7 +122,7 @@ def evaluate():
 def decodeOneHot(y: Tensor, voc: BiMap):
     ilabel = argmax(y)
     print(y.size(), y, ilabel)
-    return list(voc.lookupKs(ilabel))
+    # return list(voc.lookupKs(ilabel))
 
 
 
