@@ -1,90 +1,60 @@
 import numpy as np
-from torch import Tensor, tensor, sparse_coo_tensor, zeros, zeros_like, ones, randn, rand, diag, cat, cuda, _assert, sigmoid,tanh, Size, transpose
+from torch import Tensor, tensor, sparse_coo_tensor, zeros, zeros_like, ones, randn, rand, diag, cat, cuda, _assert, \
+    sigmoid, tanh, Size, transpose, matmul
 from torch.nn import Module, Sequential, Linear, Sigmoid, LeakyReLU
 # from torch.linalg import matmul
 from torch.nn.functional import linear, one_hot, softmax
 
+from graph import Graph, graphFromList
+
 
 class GATv2(Module):
-    """graph attention layer v2, from Brody et al, ICLR 2022"""
+    """graph attention layer v2, from Brody et al, ICLR 2022
+    :param nin: input dimension
+    :param nout: output dimension
+    :param nslope: LeakyReLU negative slope parameter
+    """
     def __init__(self, nin:int, nout:int, nslope):
         super(GATv2, self).__init__()
         self.W = Linear(nin, nout, bias=True)
         self.relu = LeakyReLU(negative_slope=nslope)
         self.a = Linear(nout, 1, bias=False)
-    def forward(o, coo):
-        """:param coo: an iterable of (row, col, Tensor, Tensor) with the edge node indices and node embeddings"""
-        nEdges = len(coo)
-        iis = np.zeros(nEdges)
-        jjs = np.zeros(nEdges)
-        vvs = np.zeros(nEdges)
-        for ilist, (i, j, hi, hj) in enumerate(coo):
-            h = cat(hi, hj, dim=0) # concatenate node features
-            hw = o.W(h) # linear
-            score = o.a(o.relu(hw)) # linear . relu
-            iis[ilist] = i
-            jjs[ilist] = j
-            vvs[ilist] = score
-        scoreMtx = sparse_coo_tensor([iis, jjs], vvs)
-        attn = softmax(scoreMtx, dim=1)  # attention weights alpha_i,j
-
-class Graph:
-    def __init__(self):
-        self.verticesDict = {}
-        self.edgesDict = {}
-    def __repr__(self):
-        return f'Nodes : {str(self.verticesDict)}, edges : {str(self.edgesDict)}'
-    def nodes(self):
-        for n in self.verticesDict.items():
-            yield n
-    def edges(self):
-        for e in self.edgesDict.items():
-            yield e
-    def lookupNode(self, k):
-        try:
-            v0 = self.verticesDict[k]
-            return v0
-        except KeyError as e:
-            return None
-    def lookupEdge(self, i):
-        try:
-            i2 = self.edgesDict[i]
-            return i2
-        except KeyError as e:
-            return None
-    def node(self, i, vv):
-        if self.lookupNode(i) is None:
-            self.verticesDict[i] = vv
-    def edge(self, i1, i2):
-        """add an edge"""
-        i2m = self.lookupEdge(i1)
-        if i2m is None:
-            self.edgesDict[i1] = [i2]
-        else:
-            self.edgesDict[i1] = [i2] + i2m
-    def neighbors(self, refIx: int, transpose=False):
-        """return iterator of neighbors of a node
-        :param transpose: return neighbors in transposed graph
+    def score(o, hi, hj):
+        """score an edge given its node embeddings"""
+        h = cat(hi, hj, dim=0)  # concatenate node features
+        hw = o.W(h)  # linear
+        return o.a(o.relu(hw))  # linear . relu
+    def forward(o, hi:Tensor, hjs:Tensor):
         """
-        if transpose:
-            for i, ns in self.edgesDict.items():
-                if refIx in ns:
-                    yield i
-        else:
-            for i, ns in self.edgesDict.items():
-                if i == refIx:
-                    for n in ns:
-                        yield n
+        :param hi: (nin * 1) embedding of node i
+        :param hjs: (nin * nni) embeddings of i's neighbors N(i)
+        :return: hi', updated embedding of node i
+        """
+        n = hjs.size(1)  # N(i)
+        eij = zeros(n)
+        for j in range(n):
+            hj = hjs[:, j]
+            eij[j] = o.score(hi, hj)
+        alphaij = softmax(eij) # attention scores
+        hiPrime = sigmoid(matmul(alphaij, o.W(hjs)))
+        return hiPrime
 
-def graphFromList(ll):
-    g = Graph()
-    for i1, i2, v1, v2 in ll:
-        g.node(i1, v1)
-        g.node(i2, v2)
-        g.edge(i1, i2)
-    return g
 
-g = graphFromList([(1, 1, 'x', 'z'), (1, 2, 'y', 'w'), (3, 2, 'a', 'b'), (4, 3, 'u', 'v'), (5, 3, 'x', 'y')])
+    # def forward(o, coo):
+    #     """:param coo: an iterable of (row, col, Tensor, Tensor) with the edge node indices and node embeddings"""
+    #     nEdges = len(coo)
+    #     iis = np.zeros(nEdges)
+    #     jjs = np.zeros(nEdges)
+    #     vvs = np.zeros(nEdges)
+    #     for ilist, (i, j, hi, hj) in enumerate(coo):
+    #         eScore = o.score(hi, hj)
+    #         iis[ilist] = i
+    #         jjs[ilist] = j
+    #         vvs[ilist] = eScore
+    #     scoreMtx = sparse_coo_tensor([iis, jjs], vvs)
+    #     attn = softmax(scoreMtx, dim=1)  # attention weights alpha_i,j
+
+
 
 
 
