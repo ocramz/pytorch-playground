@@ -57,17 +57,18 @@ class Graph:
         else:
             self.edges[i1] = [i2] + i2m
     def neighbors(self, refIx: int, transpose=False):
+        """return list of neighbors of a node
+        :param transpose: return neighbors in transposed graph
+        """
         nn = []
-        # print(str(self.edges.values()))
-        # print(str(self.edges.items()))
         if transpose:
-            for js in self.edges.values():
-                if refIx in js:
-                    nn += js
-        else:
-            for i, __ in self.edges.items():
-                if i == refIx:
+            for i, ns in self.edges.items():
+                if refIx in ns:
                     nn.append(i)
+        else:
+            for i, ns in self.edges.items():
+                if i == refIx:
+                    nn += ns
         return nn
 
 def graphFromList(ll):
@@ -78,11 +79,7 @@ def graphFromList(ll):
         g.edge(i1, i2)
     return g
 
-
-        # if self.lookupNode(i1) is not None and self.lookupEdge(i2) is not None:
-        #     en = self.lookupEdge(i1)
-        #     if en is None or not(en == i1):
-        #         self.e[i1] = i2
+g = graphFromList([(1, 1, 'x', 'z'), (1, 2, 'y', 'w'), (3, 2, 'a', 'b'), (4, 3, 'u', 'v'), (5, 3, 'x', 'y')])
 
 
 
