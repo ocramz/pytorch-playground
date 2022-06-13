@@ -58,14 +58,14 @@ class Graph:
             self.edges[i1] = [i2] + i2m
     def neighbors(self, refIx: int, transpose=False):
         nn = []
-        print(str(self.edges.values()))
-        print(str(self.edges.items()))
+        # print(str(self.edges.values()))
+        # print(str(self.edges.items()))
         if transpose:
-            for j in self.edges.values():
-                if j == refIx:
-                    nn.append(j)
+            for js in self.edges.values():
+                if refIx in js:
+                    nn += js
         else:
-            for i in self.edges.items():
+            for i, __ in self.edges.items():
                 if i == refIx:
                     nn.append(i)
         return nn
