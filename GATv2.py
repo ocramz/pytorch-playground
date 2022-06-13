@@ -6,13 +6,14 @@ from torch.nn.functional import linear, one_hot, softmax
 
 
 class GATv2(Module):
+    """graph attention layer v2, from Brody et al, ICLR 2022"""
     def __init__(self, nin:int, nout:int, nslope):
         super(GATv2, self).__init__()
         self.W = Linear(nin, nout, bias=True)
         self.relu = LeakyReLU(negative_slope=nslope)
         self.a = Linear(nout, 1, bias=False)
     def forward(o, coo):
-        """:param coo: a list of (row, col, Tensor, Tensor) with the edge node indices and node embeddings"""
+        """:param coo: an iterable of (row, col, Tensor, Tensor) with the edge node indices and node embeddings"""
         nEdges = len(coo)
         iis = np.zeros(nEdges)
         jjs = np.zeros(nEdges)
@@ -34,8 +35,24 @@ class Graph:
     def __iter__(self):
         for e in self.d.items():
             yield e
-    def values(self):
-        for v in self.__iter__():
-            yield v
+    def __repr__(self):
+        return f'{str(self.d)}'
+    def insert(self, ij: (int, int), v):
+        i, j = ij
+        self.d[(i, j)] = v
+    def neighbors(self, j0):
+        nn = []
+        for i, j in self.d.keys():
+            if j == j0:
+                nn.append(i)
+        return nn
+
+
+def graphFromList(ll):
+    g = Graph()
+    for k, v in ll:
+        #print(f'{k}, {v}')
+        g.insert(k, v)
+    return g
 
 
