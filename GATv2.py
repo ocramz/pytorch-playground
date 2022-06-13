@@ -37,6 +37,9 @@ class Graph:
             yield e
     def __repr__(self):
         return f'{str(self.d)}'
+    def tuples(self):
+        for (i, j), v in self.d.items():
+            yield i, j, v
     def insert(self, ij: (int, int), v):
         i, j = ij
         self.d[(i, j)] = v
