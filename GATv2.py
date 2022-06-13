@@ -40,11 +40,15 @@ class Graph:
     def insert(self, ij: (int, int), v):
         i, j = ij
         self.d[(i, j)] = v
-    def neighbors(self, j0):
+    def neighbors(self, refIx:int, transpose=False):
         nn = []
         for i, j in self.d.keys():
-            if j == j0:
-                nn.append(i)
+            if transpose:
+                if j == refIx:
+                    nn.append(i)
+            else:
+                if i == refIx:
+                    nn.append(j)
         return nn
 
 
