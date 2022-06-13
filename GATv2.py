@@ -30,46 +30,51 @@ class GATv2(Module):
 
 class Graph:
     def __init__(self):
-        self.vertices = {}
-        self.edges = {}
+        self.verticesDict = {}
+        self.edgesDict = {}
     def __repr__(self):
-        return f'Nodes : {str(self.vertices)}, edges : {str(self.edges)}'
+        return f'Nodes : {str(self.verticesDict)}, edges : {str(self.edgesDict)}'
+    def nodes(self):
+        for n in self.verticesDict.items():
+            yield n
+    def edges(self):
+        for e in self.edgesDict.items():
+            yield e
     def lookupNode(self, k):
         try:
-            v0 = self.vertices[k]
+            v0 = self.verticesDict[k]
             return v0
         except KeyError as e:
             return None
     def lookupEdge(self, i):
         try:
-            i2 = self.edges[i]
+            i2 = self.edgesDict[i]
             return i2
         except KeyError as e:
             return None
     def node(self, i, vv):
         if self.lookupNode(i) is None:
-            self.vertices[i] = vv
+            self.verticesDict[i] = vv
     def edge(self, i1, i2):
         """add an edge"""
         i2m = self.lookupEdge(i1)
         if i2m is None:
-            self.edges[i1] = [i2]
+            self.edgesDict[i1] = [i2]
         else:
-            self.edges[i1] = [i2] + i2m
+            self.edgesDict[i1] = [i2] + i2m
     def neighbors(self, refIx: int, transpose=False):
-        """return list of neighbors of a node
+        """return iterator of neighbors of a node
         :param transpose: return neighbors in transposed graph
         """
-        nn = []
         if transpose:
-            for i, ns in self.edges.items():
+            for i, ns in self.edgesDict.items():
                 if refIx in ns:
-                    nn.append(i)
+                    yield i
         else:
-            for i, ns in self.edges.items():
+            for i, ns in self.edgesDict.items():
                 if i == refIx:
-                    nn += ns
-        return nn
+                    for n in ns:
+                        yield n
 
 def graphFromList(ll):
     g = Graph()
