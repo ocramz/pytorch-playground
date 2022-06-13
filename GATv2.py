@@ -2,6 +2,7 @@ import numpy as np
 from torch import Tensor, tensor, sparse_coo_tensor, zeros, zeros_like, ones, randn, rand, diag, cat, cuda, _assert, \
     sigmoid, tanh, Size, transpose, matmul
 from torch.nn import Module, Sequential, Linear, Sigmoid, LeakyReLU
+from torch.utils.data import Dataset, DataLoader
 # from torch.linalg import matmul
 from torch.nn.functional import linear, one_hot, softmax
 
@@ -38,6 +39,21 @@ class GATv2(Module):
         alphaij = softmax(eij) # attention scores
         hiPrime = sigmoid(matmul(alphaij, o.W(hjs)))
         return hiPrime
+
+class GraphDataset(Dataset):
+    def __init__(self, gr:Graph):
+        self.gr = gr
+    def __len__(self):
+        return self.gr.numNodes()
+    def __getitem__(self, i):
+        hi = self.gr.lookupNode(i) # embedding of node i
+        ni = self.gr.neighbors(i)  # N(i)
+        hjs = zeros((len(hi), len(ni)))  # embeddings of neighbors
+        for j in ni:
+            hj = self.gr.lookupNode(j)
+            hjs[:, j] = hj
+        return hi, hjs
+
 
 
     # def forward(o, coo):
