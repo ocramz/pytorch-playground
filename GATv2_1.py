@@ -14,11 +14,11 @@ class GATv2(Module):
     :param nout: output dimension
     :param nslope: LeakyReLU negative slope parameter
     """
-    def __init__(self, nin:int, nout:int, nslope):
+    def __init__(self, din:int, dout:int, nslope):
         super(GATv2, self).__init__()
-        self.W = Linear(nin, nout, bias=True)
+        self.W = Linear(din, dout, bias=True)
         self.relu = LeakyReLU(negative_slope=nslope)
-        self.a = Linear(nout, 1, bias=False)
+        self.a = Linear(dout, 1, bias=False)
     def score(o, hi, hj):
         """score an edge given its node embeddings"""
         h = cat(hi, hj, dim=0)  # concatenate node features
