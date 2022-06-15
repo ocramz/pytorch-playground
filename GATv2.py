@@ -31,7 +31,7 @@ class GATv2(Module):
         :param hjs: (nin * nni) embeddings of i's neighbors N(i)
         :return: hi', updated embedding of node i
         """
-        n = hjs.size(1)  # N(i)
+        n = hjs.size(1)  # |N(i)|
         eij = zeros(n)
         for j in range(n):
             hj = hjs[:, j]
